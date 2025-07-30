@@ -44,6 +44,7 @@
                                 <span id="voice-icon">🎤</span>
                                 <span id="voice-text">Voice Input</span>
                             </button>
+                            <button id="test-voice-btn" class="btn btn-secondary" style="margin-left: 10px;">Test Voice Parsing</button>
                             <div id="voice-feedback" class="voice-feedback"></div>
                         </div>
                     </div>
@@ -144,17 +145,27 @@
             }
 
             async initializeSpeechRecognition() {
-                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    this.recognition = new SpeechRecognition();
-                    this.isSupported = true;
-                    
-                    // Check microphone permission first
-                    await this.checkMicrophonePermission();
-                    this.setupRecognition();
-                } else {
+                try {
+                    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        this.recognition = new SpeechRecognition();
+                        this.isSupported = true;
+                        console.log('Speech recognition API found and initialized');
+                        
+                        // Check microphone permission first
+                        await this.checkMicrophonePermission();
+                        this.setupRecognition();
+                        
+                        console.log('Voice recognition fully initialized');
+                    } else {
+                        this.isSupported = false;
+                        console.warn('Speech recognition not supported in this browser');
+                        updateVoiceFeedback('Voice recognition not supported in this browser');
+                    }
+                } catch (error) {
+                    console.error('Error initializing speech recognition:', error);
                     this.isSupported = false;
-                    console.warn('Speech recognition not supported in this browser');
+                    updateVoiceFeedback('Failed to initialize voice recognition');
                 }
             }
 
@@ -181,6 +192,7 @@
                     }
                 } catch (error) {
                     console.log('Permission API not available, will request on first use');
+                    this.permissionGranted = false;
                 }
             }
 
@@ -220,15 +232,26 @@
                     console.error('Speech recognition error:', event.error);
                     
                     let errorMessage = 'Voice recognition error';
+                    let shouldRestart = false;
+                    
                     switch (event.error) {
                         case 'no-speech':
                             errorMessage = 'No speech detected. Please try again.';
+                            shouldRestart = false;
                             break;
                         case 'audio-capture':
-                            errorMessage = 'Microphone not available.';
+                            errorMessage = 'Microphone not available. Check your microphone connection.';
                             break;
                         case 'not-allowed':
-                            errorMessage = 'Microphone permission denied.';
+                            errorMessage = 'Microphone permission denied. Please allow microphone access.';
+                            this.permissionGranted = false;
+                            break;
+                        case 'network':
+                            errorMessage = 'Network error occurred. Check your internet connection.';
+                            break;
+                        case 'aborted':
+                            errorMessage = 'Voice recognition was stopped.';
+                            shouldRestart = false;
                             break;
                         default:
                             errorMessage = `Voice error: ${event.error}`;
@@ -236,6 +259,14 @@
 
                     updateVoiceFeedback(errorMessage);
                     this.stop();
+                    
+                    // Auto-restart for certain errors
+                    if (shouldRestart && !isListening) {
+                        setTimeout(() => {
+                            console.log('Auto-restarting voice recognition...');
+                            this.start();
+                        }, 2000);
+                    }
                 };
 
                 this.recognition.onstart = () => {
@@ -254,20 +285,34 @@
             start() {
                 if (!this.isSupported) {
                     updateVoiceFeedback('Voice recognition not supported in this browser. Try Chrome, Edge, or Safari.');
+                    console.log('Voice recognition not supported');
                     return false;
                 }
 
                 if (isListening) {
+                    console.log('Already listening, stopping...');
                     this.stop();
                     return false;
+                }
+
+                if (!this.recognition) {
+                    console.log('Recognition object not initialized, reinitializing...');
+                    this.initializeSpeechRecognition();
+                    if (!this.recognition) {
+                        updateVoiceFeedback('Failed to initialize voice recognition.');
+                        return false;
+                    }
                 }
 
                 // Show helpful message about permission
                 if (!this.permissionGranted) {
                     updateVoiceFeedback('Grant microphone permission when prompted...');
+                    console.log('Microphone permission not granted yet');
                 }
 
                 try {
+                    console.log('Starting voice recognition...');
+                    updateVoiceFeedback('Starting voice recognition...');
                     this.recognition.start();
                     return true;
                 } catch (error) {
@@ -278,8 +323,15 @@
                         updateVoiceFeedback('Microphone access denied. Please allow microphone in browser settings.');
                     } else if (error.name === 'NotSupportedError') {
                         updateVoiceFeedback('Voice recognition not supported. Try Chrome, Edge, or Safari.');
+                    } else if (error.name === 'InvalidStateError') {
+                        updateVoiceFeedback('Voice recognition busy. Please try again.');
+                        // Try to reset the recognition object
+                        setTimeout(() => {
+                            this.recognition = null;
+                            this.initializeSpeechRecognition();
+                        }, 1000);
                     } else {
-                        updateVoiceFeedback('Voice recognition failed. Try refreshing the page.');
+                        updateVoiceFeedback(`Voice recognition error: ${error.message || error.name || 'Unknown error'}`);
                     }
                     return false;
                 }
@@ -298,22 +350,53 @@
                 updateVoiceFeedback(`Heard: "${transcript}"`);
                 
                 const chessMove = this.parseVoiceToChessMove(transcript);
+                console.log(`parseVoiceToChessMove returned: "${chessMove}"`);
+                
                 if (chessMove) {
                     console.log(`Parsed chess move: "${chessMove}"`);
                     updateVoiceFeedback(`Processing: ${chessMove}`);
                     
-                    if (parseAndPlayMove(chessMove)) {
-                        updateVoiceFeedback(`Move played: ${chessMove}`);
-                    } else {
-                        updateVoiceFeedback(`Invalid move: ${chessMove}`);
+                    try {
+                        const moveSuccess = parseAndPlayMove(chessMove);
+                        console.log(`parseAndPlayMove returned: ${moveSuccess}`);
+                        
+                        if (moveSuccess) {
+                            updateVoiceFeedback(`Move played: ${chessMove}`);
+                            renderBoard();
+                            updateDisplay();
+                        } else {
+                            updateVoiceFeedback(`Invalid move: ${chessMove}`);
+                            console.log('Move failed - checking why...');
+                            
+                            // Try simpler variations
+                            const variations = [
+                                chessMove.toLowerCase(),
+                                chessMove.toUpperCase(),
+                                chessMove.replace(/[^a-h1-8]/g, ''), // Remove non-chess chars
+                            ];
+                            
+                            for (const variation of variations) {
+                                if (variation !== chessMove && parseAndPlayMove(variation)) {
+                                    updateVoiceFeedback(`Move played: ${variation}`);
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error executing move:', error);
+                        updateVoiceFeedback(`Error: ${error.message}`);
                     }
                 } else {
-                    updateVoiceFeedback('Could not understand chess move');
+                    console.log(`Failed to parse voice input: "${transcript}"`);
+                    updateVoiceFeedback('Could not understand chess move. Try: "e4", "knight f3", or "queen takes d4"');
                 }
 
                 setTimeout(() => {
-                    document.getElementById('voice-feedback').textContent = '';
-                }, 3000);
+                    const feedbackEl = document.getElementById('voice-feedback');
+                    if (feedbackEl) {
+                        feedbackEl.textContent = '';
+                    }
+                }, 4000);
             }
 
             parseVoiceToChessMove(text) {
@@ -327,11 +410,15 @@
                     'one': '1', 'two': '2', 'three': '3', 'four': '4',
                     'five': '5', 'six': '6', 'seven': '7', 'eight': '8',
                     'alpha': 'a', 'bravo': 'b', 'charlie': 'c', 'delta': 'd',
-                    'echo': 'e', 'foxtrot': 'f', 'golf': 'g', 'hotel': 'h'
+                    'echo': 'e', 'foxtrot': 'f', 'golf': 'g', 'hotel': 'h',
+                    // Common speech variations
+                    'to': '2', 'too': '2', 'for': '4', 'ate': '8', 'won': '1',
+                    'tree': '3', 'free': '3', 'bee': 'b', 'see': 'c', 'tea': 't',
+                    'pee': 'p', 'queue': 'q', 'are': 'r', 'you': 'u', 'why': 'y'
                 };
 
                 for (const [spoken, notation] of Object.entries(replacements)) {
-                    text = text.replace(new RegExp(spoken, 'gi'), notation);
+                    text = text.replace(new RegExp(`\\b${spoken}\\b`, 'gi'), notation);
                 }
 
                 // Handle castling
@@ -403,11 +490,25 @@
                     return pawnMatch[1];
                 }
 
+                // Handle simple file-rank combinations (e.g., "e 4", "d two")
+                const simplePattern = /([a-h])\s*([1-8])/i;
+                const simpleMatch = text.match(simplePattern);
+                if (simpleMatch) {
+                    return simpleMatch[1] + simpleMatch[2];
+                }
+
                 // Try to extract any chess notation pattern as fallback
                 const notationPattern = /([a-h][1-8][a-h][1-8]|[QKRBN]?[a-h][1-8])/gi;
                 const matches = text.match(notationPattern);
                 if (matches && matches.length > 0) {
                     return matches[0];
+                }
+
+                // Last resort: try to find individual chess coordinates
+                const fileMatch = text.match(/\b([a-h])\b/i);
+                const rankMatch = text.match(/\b([1-8])\b/);
+                if (fileMatch && rankMatch) {
+                    return fileMatch[1].toLowerCase() + rankMatch[1];
                 }
 
                 return null;
@@ -1162,6 +1263,21 @@
         function parseAndPlayMove(move) {
             console.log(`Processing text move: "${move}"`);
             
+            // Check if we can make moves
+            if (isGameOver) {
+                console.log('Game is over, cannot make moves');
+                updateVoiceFeedback('Game is over! Start a new game to continue.');
+                return false;
+            }
+            
+            if (pendingPromotion) {
+                console.log('Promotion pending, cannot make regular moves');
+                updateVoiceFeedback('Choose promotion piece first');
+                return false;
+            }
+            
+            console.log(`Current player: ${currentPlayer}, Game state: ${isGameOver ? 'over' : 'active'}`);
+            
             // Clean the notation
             move = move.trim().replace(/[+#!?]+$/g, ''); // Remove check/mate annotations
             
@@ -1704,6 +1820,26 @@
                 
                 if (voiceBtn) {
                     voiceBtn.onclick = toggleVoiceRecognition;
+                }
+
+                const testVoiceBtn = document.getElementById('test-voice-btn');
+                if (testVoiceBtn) {
+                    testVoiceBtn.onclick = function() {
+                        const testPhrases = ['e4', 'knight f3', 'queen takes d4', 'castle', 'pawn to e5'];
+                        const testPhrase = testPhrases[Math.floor(Math.random() * testPhrases.length)];
+                        
+                        console.log(`Testing voice parsing with: "${testPhrase}"`);
+                        updateVoiceFeedback(`Testing: "${testPhrase}"`);
+                        
+                        if (!voiceRecognition) {
+                            voiceRecognition = new VoiceRecognition();
+                        }
+                        
+                        // Wait for initialization to complete
+                        setTimeout(() => {
+                            voiceRecognition.processVoiceCommand(testPhrase);
+                        }, 500);
+                    };
                 }
 
                 if (undoBtn) {
