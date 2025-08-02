@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Master - Professional Chess Platform</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♟️ Chess Master</h1>
+            <p>Your ultimate chess experience</p>
+        </header>
+
+        <!-- Home Page Menu -->
+        <div id="home-page" class="home-page">
+            <div class="menu-grid">
+                <div class="menu-item" onclick="showSection('play-online')">
+                    <div class="menu-icon">🌐</div>
+                    <h3>Play Online</h3>
+                    <p>Play against opponents worldwide</p>
+                </div>
+                
+                <div class="menu-item" onclick="showSection('play-ai')">
+                    <div class="menu-icon">🤖</div>
+                    <h3>Play AI</h3>
+                    <p>Challenge Stockfish engine</p>
+                </div>
+                
+                <div class="menu-item" onclick="showSection('explorer')">
+                    <div class="menu-icon">🔍</div>
+                    <h3>Explorer</h3>
+                    <p>Explore chess openings</p>
+                </div>
+                
+                <div class="menu-item" onclick="showSection('analysis')">
+                    <div class="menu-icon">📊</div>
+                    <h3>Analysis</h3>
+                    <p>Analyze positions and games</p>
+                </div>
+                
+                <div class="menu-item" onclick="showSection('play-in-person')">
+                    <div class="menu-icon">👥</div>
+                    <h3>Play in Person</h3>
+                    <p>Local multiplayer chess</p>
+                </div>
+                
+                <div class="menu-item" onclick="showSection('puzzles')">
+                    <div class="menu-icon">🧩</div>
+                    <h3>Puzzles</h3>
+                    <p>Solve tactical puzzles</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Play Online Section -->
+        <div id="play-online-page" class="game-section" style="display: none;">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('home')">← Back</button>
+                <h2>🌐 Play Online</h2>
+            </div>
+            
+            <div class="time-controls">
+                <h3>Choose Time Control</h3>
+                <div class="time-grid">
+                    <div class="time-option" onclick="startOnlineGame('bullet')">
+                        <div class="time-icon">⚡</div>
+                        <h4>Bullet</h4>
+                        <p>1+0, 2+1</p>
+                    </div>
+                    <div class="time-option" onclick="startOnlineGame('blitz')">
+                        <div class="time-icon">🔥</div>
+                        <h4>Blitz</h4>
+                        <p>3+0, 5+0</p>
+                    </div>
+                    <div class="time-option" onclick="startOnlineGame('rapid')">
+                        <div class="time-icon">🏃</div>
+                        <h4>Rapid</h4>
+                        <p>10+0, 15+10</p>
+                    </div>
+                    <div class="time-option" onclick="startOnlineGame('classical')">
+                        <div class="time-icon">🎯</div>
+                        <h4>Classical</h4>
+                        <p>30+0, 60+0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Play AI Section -->
+        <div id="play-ai-page" class="game-section" style="display: none;">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('home')">← Back</button>
+                <h2>🤖 Play Against AI</h2>
+            </div>
+            
+            <div class="game-area">
+                <!-- Chess Board -->
+                <div class="chess-board-container">
+                    <div id="chess-board" class="chess-board"></div>
+                    <div class="board-coordinates">
+                        <div class="rank-labels">
+                            <span>8</span><span>7</span><span>6</span><span>5</span>
+                            <span>4</span><span>3</span><span>2</span><span>1</span>
+                        </div>
+                        <div class="file-labels">
+                            <span>a</span><span>b</span><span>c</span><span>d</span>
+                            <span>e</span><span>f</span><span>g</span><span>h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls Panel -->
+                <div class="controls-panel">
+                    <!-- AI Difficulty -->
+                    <div class="control-section">
+                        <h3>AI Difficulty</h3>
+                        <div class="difficulty-selection">
+                            <div class="difficulty-option">
+                                <input type="radio" id="easy-ai" name="ai-level" value="easy" checked>
+                                <label for="easy-ai">Easy (1200)</label>
+                            </div>
+                            <div class="difficulty-option">
+                                <input type="radio" id="medium-ai" name="ai-level" value="medium">
+                                <label for="medium-ai">Medium (1600)</label>
+                            </div>
+                            <div class="difficulty-option">
+                                <input type="radio" id="hard-ai" name="ai-level" value="hard">
+                                <label for="hard-ai">Hard (2000)</label>
+                            </div>
+                            <div class="difficulty-option">
+                                <input type="radio" id="master-ai" name="ai-level" value="master">
+                                <label for="master-ai">Master (2400+)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Move Input -->
+                    <div class="control-section">
+                        <h3>Move Input</h3>
+                        <div class="input-group">
+                            <input type="text" id="move-input" placeholder="Enter move (e.g., e4, Nf3)" />
+                            <button id="submit-move" class="btn btn-primary">Play Move</button>
+                        </div>
+                        
+                        <!-- Voice Controls -->
+                        <div class="voice-controls">
+                            <button id="voice-btn" class="btn btn-voice">
+                                <span id="voice-icon">🎤</span>
+                                <span id="voice-text">Voice Input</span>
+                            </button>
+                        </div>
+                        <div id="voice-feedback" class="voice-feedback"></div>
+                    </div>
+
+                    <!-- Game Status -->
+                    <div class="control-section">
+                        <h3>Game Status</h3>
+                        <div id="current-turn" class="game-status white-turn">White to move</div>
+                        <div id="game-status" class="game-status">Game in progress</div>
+                    </div>
+
+                    <!-- Move History -->
+                    <div class="control-section">
+                        <h3>Move History</h3>
+                        <div id="moves-list" class="moves-list">No moves yet</div>
+                    </div>
+
+                    <!-- Game Controls -->
+                    <div class="control-section">
+                        <h3>Game Controls</h3>
+                        <div class="button-group">
+                            <button id="new-game" class="btn btn-secondary">New Game</button>
+                            <button id="undo-move" class="btn btn-secondary">Undo Move</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Section -->
+        <div id="analysis-page" class="game-section" style="display: none;">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('home')">← Back</button>
+                <h2>📊 Position Analysis</h2>
+            </div>
+            
+            <div class="game-area">
+                <!-- Analysis Board -->
+                <div class="chess-board-container">
+                    <div id="analysis-chess-board" class="chess-board"></div>
+                    <div class="board-coordinates">
+                        <div class="rank-labels">
+                            <span>8</span><span>7</span><span>6</span><span>5</span>
+                            <span>4</span><span>3</span><span>2</span><span>1</span>
+                        </div>
+                        <div class="file-labels">
+                            <span>a</span><span>b</span><span>c</span><span>d</span>
+                            <span>e</span><span>f</span><span>g</span><span>h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Controls -->
+                <div class="controls-panel">
+                    <!-- Position Setup -->
+                    <div class="control-section">
+                        <h3>Position Setup</h3>
+                        <textarea id="fen-input" placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" rows="3"></textarea>
+                        <button id="load-fen" class="btn btn-primary">Load Position</button>
+                        <div class="quick-positions">
+                            <button class="btn btn-secondary" onclick="loadStartingPosition()">Starting Position</button>
+                            <button class="btn btn-secondary" onclick="loadCurrentGamePosition()">Current Game</button>
+                        </div>
+                    </div>
+
+                    <!-- Engine Analysis -->
+                    <div class="control-section">
+                        <h3>Engine Analysis</h3>
+                        <div class="evaluation-bar">
+                            <div id="eval-bar-white" class="eval-bar-white"></div>
+                            <div id="eval-bar-black" class="eval-bar-black"></div>
+                        </div>
+                        <div class="evaluation-score">
+                            <span id="eval-score-text">+0.00</span>
+                        </div>
+                        <div class="analysis-status">
+                            <span id="analysis-status">Click "Start Analysis" to begin</span>
+                        </div>
+                        
+                        <div class="analysis-controls">
+                            <button id="start-analysis" class="btn btn-primary">Start Analysis</button>
+                            <button id="stop-analysis" class="btn btn-secondary">Stop</button>
+                        </div>
+                    </div>
+
+                    <!-- Best Moves -->
+                    <div class="control-section">
+                        <h3>Best Moves</h3>
+                        <div id="best-moves-list" class="best-moves-list">
+                            Start analysis to see best moves
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Play in Person Section -->
+        <div id="play-in-person-page" class="game-section" style="display: none;">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('home')">← Back</button>
+                <h2>👥 Play in Person</h2>
+            </div>
+            
+            <div class="game-area">
+                <!-- Chess Board -->
+                <div class="chess-board-container">
+                    <div id="local-chess-board" class="chess-board"></div>
+                    <div class="board-coordinates">
+                        <div class="rank-labels">
+                            <span>8</span><span>7</span><span>6</span><span>5</span>
+                            <span>4</span><span>3</span><span>2</span><span>1</span>
+                        </div>
+                        <div class="file-labels">
+                            <span>a</span><span>b</span><span>c</span><span>d</span>
+                            <span>e</span><span>f</span><span>g</span><span>h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Local Game Controls -->
+                <div class="controls-panel">
+                    <!-- Game Status -->
+                    <div class="control-section">
+                        <h3>Game Status</h3>
+                        <div id="local-current-turn" class="game-status white-turn">White to move</div>
+                        <div id="local-game-status" class="game-status">Game in progress</div>
+                    </div>
+
+                    <!-- Move Input -->
+                    <div class="control-section">
+                        <h3>Move Input</h3>
+                        <div class="input-group">
+                            <input type="text" id="local-move-input" placeholder="Enter move (e.g., e4, Nf3)" />
+                            <button id="local-submit-move" class="btn btn-primary">Play Move</button>
+                        </div>
+                        
+                        <!-- Voice Controls -->
+                        <div class="voice-controls">
+                            <button id="local-voice-btn" class="btn btn-voice">
+                                <span id="local-voice-icon">🎤</span>
+                                <span id="local-voice-text">Voice Input</span>
+                            </button>
+                        </div>
+                        <div id="local-voice-feedback" class="voice-feedback"></div>
+                    </div>
+
+                    <!-- Move History -->
+                    <div class="control-section">
+                        <h3>Move History</h3>
+                        <div id="local-moves-list" class="moves-list">No moves yet</div>
+                    </div>
+
+                    <!-- Game Controls -->
+                    <div class="control-section">
+                        <h3>Game Controls</h3>
+                        <div class="button-group">
+                            <button id="local-new-game" class="btn btn-secondary">New Game</button>
+                            <button id="local-undo-move" class="btn btn-secondary">Undo Move</button>
+                            <button id="flip-board" class="btn btn-secondary">Flip Board</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explorer Section -->
+        <div id="explorer-page" class="game-section" style="display: none;">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('home')">← Back</button>
+                <h2>🔍 Opening Explorer</h2>
+            </div>
+            
+            <div class="explorer-content">
+                <div class="feature-placeholder">
+                    <div class="placeholder-icon">🚧</div>
+                    <h3>Opening Explorer</h3>
+                    <p>Coming Soon! Explore chess openings, variations, and statistics.</p>
+                    <div class="feature-list">
+                        <div class="feature-item">📚 Opening Database</div>
+                        <div class="feature-item">📈 Move Statistics</div>
+                        <div class="feature-item">🎯 Popular Variations</div>
+                        <div class="feature-item">🏆 Grandmaster Games</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Puzzles Section -->
+        <div id="puzzles-page" class="game-section" style="display: none;">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('home')">← Back</button>
+                <h2>🧩 Chess Puzzles</h2>
+            </div>
+            
+            <div class="puzzles-content">
+                <div class="feature-placeholder">
+                    <div class="placeholder-icon">🧩</div>
+                    <h3>Tactical Puzzles</h3>
+                    <p>Coming Soon! Improve your tactical skills with chess puzzles.</p>
+                    <div class="feature-list">
+                        <div class="feature-item">⚡ Daily Puzzles</div>
+                        <div class="feature-item">🎯 Themed Tactics</div>
+                        <div class="feature-item">📊 Progress Tracking</div>
+                        <div class="feature-item">🏅 Rating System</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotion Modal -->
+    <div id="promotion-modal" class="promotion-modal" style="display: none;">
+        <div class="promotion-dialog">
+            <h3>Pawn Promotion</h3>
+            <p>Choose a piece to promote to:</p>
+            <div class="promotion-pieces">
+                <button class="promotion-btn" data-piece="queen">♕</button>
+                <button class="promotion-btn" data-piece="rook">♖</button>
+                <button class="promotion-btn" data-piece="bishop">♗</button>
+                <button class="promotion-btn" data-piece="knight">♘</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="js/chess-engine.js"></script>
+    <script src="js/voice-recognition.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Stockfish Engine -->
+    <script src="stockfish.js"></script>
+
+    <!-- Navigation and Helper Scripts -->
+    <script>
+        // Global navigation function
+        function showSection(section) {
+            if (window.chessApp && window.chessApp.isReady()) {
+                window.chessApp.getUIManager().showSection(section);
+            } else {
+                // Fallback navigation for immediate use
+                document.querySelectorAll('.home-page, .game-section').forEach(el => {
+                    el.style.display = 'none';
+                });
+                
+                if (section === 'home') {
+                    document.getElementById('home-page').style.display = 'block';
+                } else {
+                    const targetPage = document.getElementById(section + '-page');
+                    if (targetPage) {
+                        targetPage.style.display = 'block';
+                    }
+                }
+            }
+        }
+
+        function startOnlineGame(timeControl) {
+            alert(`Starting ${timeControl} game! (Online multiplayer coming soon)`);
+            showSection('play-ai'); // Redirect to AI for now
+        }
+
+        function loadStartingPosition() {
+            if (window.chessApp && window.chessApp.isReady()) {
+                window.chessApp.getUIManager().loadStartingPosition();
+            }
+        }
+
+        function loadCurrentGamePosition() {
+            if (window.chessApp && window.chessApp.isReady()) {
+                window.chessApp.getUIManager().loadCurrentGamePosition();
+            }
+        }
+
+        // Show home page by default
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('home');
+        });
+    </script>
+</body>
+</html> 
